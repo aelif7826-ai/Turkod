@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TürkOD Modül İnceleme</title>
+<style>
+  :root {
+    --bg: #1e2230;
+    --bg-soft: #252b3d;
+    --bg-panel: #232839;
+    --border: #343b52;
+    --text: #d8dcea;
+    --text-dim: #9aa1b8;
+    --accent: #7aa2f7;
+    --accent-soft: rgba(122, 162, 247, .14);
+    --green: #9ece6a;
+    --green-soft: rgba(158,206,106,.13);
+    --yellow: #e0af68;
+    --yellow-soft: rgba(224,175,104,.13);
+    --purple: #bb9af7;
+    --red: #f7768e;
+    --red-soft: rgba(247,118,142,.12);
+    --orange: #ff9e64;
+    --cyan: #7dcfff;
+    --string: #a8d8a8;
+    --comment: #6f7790;
+    --code-bg: #1a1e2b;
+  }
+  body.light {
+    --bg: #f4f1e8;
+    --bg-soft: #ece7d9;
+    --bg-panel: #faf7ef;
+    --border: #d8d1bd;
+    --text: #3d3a2e;
+    --text-dim: #8a8471;
+    --accent: #4a6fa5;
+    --accent-soft: rgba(74, 111, 165, .12);
+    --code-bg: #faf7ef;
+    --string: #3f7a3f;
+    --comment: #a09a86;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header .logo { font-size: 22px; }
+  header h1 { font-size: 16px; font-weight: 600; }
+  header h1 small { color: var(--text-dim); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  nav.mainnav { display: flex; gap: 6px; margin-left: 8px; }
+  nav.mainnav a {
+    padding: 6px 12px; border-radius: 8px; font-size: 12px;
+    color: var(--text-dim); text-decoration: none; border: 1px solid transparent;
+  }
+  nav.mainnav a:hover { color: var(--text); background: var(--bg-soft); }
+  nav.mainnav a.active { color: var(--accent); border-color: var(--border); background: var(--accent-soft); }
+  header .spacer { flex: 1; }
+  button, .file-btn {
+    background: var(--bg-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: .15s;
+    font-family: inherit;
+  }
+  button:hover, .file-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { filter: brightness(1.1); }
+  button.approve { background: var(--green); border-color: var(--green); color: #10240a; font-weight: 700; }
+  button.approve:hover { filter: brightness(1.08); }
+  button.reject { background: transparent; border-color: var(--red); color: var(--red); font-weight: 700; }
+  button.reject:hover { background: var(--red-soft); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .toolbar-group { display: flex; align-items: center; gap: 6px; }
+  .toolbar-group label { font-size: 12px; color: var(--text-dim); }
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--bg-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus, button:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { width: 100%; resize: vertical; min-height: 64px; line-height: 1.5; }
+
+  /* ---- boş durum ---- */
+  #dropzone { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+  #dropzone.hidden { display: none; }
+  .drop-card {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 52px 60px;
+    text-align: center;
+    max-width: 600px;
+    background: var(--bg-panel);
+    transition: .2s;
+  }
+  .drop-card.over { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.02); }
+  .drop-card .big { font-size: 52px; margin-bottom: 12px; }
+  .drop-card h2 { font-size: 20px; margin-bottom: 8px; }
+  .drop-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; line-height: 1.7; }
+  .drop-card .exts { margin-top: 16px; font-size: 12px; color: var(--text-dim); }
+  .drop-card .exts code {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px; margin: 0 3px;
+  }
+  #dropError {
+    display: none; margin-top: 16px; padding: 10px 14px; border-radius: 8px;
+    background: var(--red-soft); border: 1px solid var(--red); color: var(--red); font-size: 13px;
+  }
+
+  /* ---- ana düzen ---- */
+  #viewer { display: none; flex: 1; min-height: 0; }
+  #viewer.visible { display: flex; }
+  aside {
+    width: 320px; min-width: 320px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 18px;
+    max-height: calc(100vh - 55px);
+    position: sticky; top: 55px;
+  }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-dim); margin-bottom: 10px; }
+
+  /* künye kartı */
+  #kunye { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: none; }
+  #kunye.visible { display: block; }
+  #kunye .k-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  #kunye .k-ver { font-size: 11px; color: var(--text-dim); font-family: Consolas, monospace; margin-bottom: 8px; }
+  #kunye .k-desc { font-size: 13px; color: var(--text); line-height: 1.55; margin-bottom: 10px; }
+  #kunye .k-empty { color: var(--yellow); font-style: italic; }
+  #kunye table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #kunye td { padding: 4px 0; vertical-align: top; }
+  #kunye td:first-child { color: var(--text-dim); width: 78px; }
+  #statusBadge {
+    display: inline-block; font-size: 11px; font-weight: 700; border-radius: 20px;
+    padding: 3px 12px; margin-bottom: 8px;
+    background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow);
+  }
+  #statusBadge.ok { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+  #statusBadge.no { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+
+  /* ön kontrol */
+  #checks { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+  #checks li { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; line-height: 1.45; }
+  #checks li.ok { border-left: 3px solid var(--green); }
+  #checks li.warn { border-left: 3px solid var(--yellow); }
+  #checks li.bad { border-left: 3px solid var(--red); }
+
+  /* onay paneli */
+  #decision { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  #decision .row { display: flex; gap: 8px; margin: 10px 0; }
+  #decision .row button { flex: 1; padding: 10px; font-size: 14px; }
+  #decision label { display: block; margin-top: 4px; }
+  .seg { display: flex; gap: 8px; margin: 6px 0 10px; }
+  .seg button { flex: 1; padding: 9px; font-size: 14px; font-weight: 700; opacity: .55; }
+  .seg button.active { opacity: 1; }
+  .seg button.seg-onay.active { background: var(--green); border-color: var(--green); color: #10240a; }
+  .seg button.seg-red.active { background: transparent; border-color: var(--red); color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  #formWarn { display: none; font-size: 12.5px; color: var(--red); background: var(--red-soft); border: 1px solid var(--red); border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+  #reportOut { display: none; margin-top: 10px; }
+  #reportOut.visible { display: block; }
+  #reportOut pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; font-size: 11px; max-height: 180px; overflow: auto;
+    font-family: Consolas, monospace; white-space: pre-wrap; word-break: break-word;
+  }
+  #reportOut .row { display: flex; gap: 8px; margin-top: 8px; }
+  #reportOut .row button { flex: 1; font-size: 12px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .stat b { display: block; font-size: 20px; font-weight: 700; }
+  .stat span { font-size: 11px; color: var(--text-dim); }
+  .outline-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+  .outline-list li button {
+    width: 100%; text-align: left; background: none; border: none;
+    border-radius: 7px; padding: 6px 9px; font-size: 13px; color: var(--text);
+    display: flex; gap: 8px; align-items: baseline; cursor: pointer;
+  }
+  .outline-list li button:hover { background: var(--accent-soft); border: none; }
+  .outline-list .ln { color: var(--text-dim); font-size: 11px; min-width: 34px; font-family: Consolas, monospace; }
+  .badge { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+  .badge.fn { background: rgba(187,154,247,.18); color: var(--purple); }
+  .badge.var { background: rgba(125,207,255,.15); color: var(--cyan); }
+  .badge.if { background: rgba(224,175,104,.16); color: var(--yellow); }
+  .badge.loop { background: rgba(158,206,106,.15); color: var(--green); }
+  .badge.print { background: rgba(122,162,247,.15); color: var(--accent); }
+  .badge.sec { background: rgba(247,118,142,.13); color: var(--red); }
+  .badge.try { background: rgba(255,158,100,.15); color: var(--orange); }
+  .empty-note { color: var(--text-dim); font-size: 13px; }
+
+  main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #filebar {
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-dim); flex-wrap: wrap;
+  }
+  #filebar strong { color: var(--text); font-family: Consolas, monospace; font-weight: 600; }
+  #fileTabs { display: flex; gap: 6px; padding: 10px 18px 0; flex-wrap: wrap; }
+  #fileTabs button { font-family: Consolas, monospace; font-size: 12px; }
+  #fileTabs button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  #code-scroll { overflow: auto; flex: 1; padding: 8px 0 60px 0; }
+  #code-table { border-collapse: collapse; width: 100%; font-family: Consolas, "JetBrains Mono", monospace; font-size: var(--code-size, 14px); line-height: 1.7; }
+  #code-table td { vertical-align: top; padding: 0; }
+  td.gutter {
+    text-align: right; padding: 0 10px 0 18px !important; color: var(--comment);
+    user-select: none; min-width: 58px; font-size: .85em;
+  }
+  td.gutter .mark { margin-left: 6px; font-size: 11px; }
+  td.code-cell { width: 100%; }
+  td.code-cell pre { margin: 0; padding: 0 22px 0 14px; white-space: pre; font: inherit; }
+  body.wrap td.code-cell pre { white-space: pre-wrap; word-break: break-word; }
+  tr.line-row { border-left: 3px solid transparent; }
+  tr.line-row:hover td { background: var(--accent-soft); }
+  tr.line-row.active td { background: var(--accent-soft); }
+  tr.line-row.active { border-left-color: var(--accent); }
+  tr.line-row.flash td { animation: flash 1.2s; }
+  @keyframes flash { 0% { background: var(--accent-soft); } 100% { background: transparent; } }
+  tr.line-row.mark-hit td.code-cell pre { background: rgba(224,175,104,.12); border-radius: 4px; }
+
+  .tok-kw { color: var(--purple); font-weight: 600; }
+  .tok-str { color: var(--string); }
+  .tok-num { color: var(--orange); }
+  .tok-com { color: var(--comment); font-style: italic; }
+  .tok-fn { color: var(--cyan); }
+  .tok-op { color: var(--red); }
+  .hl-search { background: rgba(224,175,104,.45); border-radius: 3px; color: inherit; }
+
+  footer {
+    background: var(--bg-panel); border-top: 1px solid var(--border);
+    padding: 8px 20px; font-size: 12px; color: var(--text-dim);
+    display: none; gap: 18px; flex-wrap: wrap;
+  }
+  footer.visible { display: flex; }
+  footer b { color: var(--text); }
+
+  @media (max-width: 900px) {
+    #viewer.visible { flex-direction: column; }
+    aside { width: 100%; min-width: 0; max-height: none; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+    nav.mainnav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🔍</span>
+  <h1>TürkOD İnceleme <small>modül onay paneli</small></h1>
+  <nav class="mainnav">
+    <a href="../index.html">Ana Sayfa</a>
+    <a href="../referans/index.html">Referans</a>
+    <a href="../moduller/index.html">Modüller</a>
+    <a href="../deneme/index.html">Canlı Deneme</a>
+    <a href="../gelistirici/index.html">Geliştirici</a>
+    <a href="./index.html" class="active">İnceleme</a>
+  </nav>
+  <div class="spacer"></div>
+  <label class="file-btn" for="fileInput" style="margin:0">📂 Dosya Aç</label>
+  <input type="file" id="fileInput" accept=".turkod,.tr,.txt" hidden>
+  <button id="sampleBtn" title="Örnek bir .turkod paketi yükler">✨ Örnek</button>
+  <button id="closeBtn" title="Dosyayı kapat">✖ Kapat</button>
+  <div class="toolbar-group">
+    <label for="fontSize">Yazı</label>
+    <select id="fontSize">
+      <option value="12px">Küçük</option>
+      <option value="14px" selected>Normal</option>
+      <option value="16px">Büyük</option>
+      <option value="18px">Çok büyük</option>
+    </select>
+  </div>
+  <div class="toolbar-group">
+    <label for="wrapToggle">Kaydır</label>
+    <input type="checkbox" id="wrapToggle" title="Satır kaydırma">
+  </div>
+  <button id="themeBtn" title="Açık / koyu tema">🌙 Tema</button>
+</header>
+
+<!-- BOŞ DURUM -->
+<div id="dropzone">
+  <div class="drop-card" id="dropCard">
+    <div class="big">📦</div>
+    <h2>.turkod modülünü buraya bırak</h2>
+    <p>Geliştiricinin <b><code>modül_derle</code></b> ile derlediği <b>.turkod</b> paketi seçildiği anda <b>direkt bu sayfada açılır</b> — künyesi, dosyaları ve koduyla incelersin, sonra <b>✅ onayla</b> ya da <b>❌ reddet</b>.<br>Sürükle-bırak da çalışır. Düz <b>.tr</b> dosyası da açabilirsin.</p>
+    <label class="file-btn" for="fileInput2" style="font-size:15px;padding:10px 26px">📂 Dosya Seç ve Aç</label>
+    <input type="file" id="fileInput2" accept=".turkod,.tr,.txt" hidden>
+    <div class="exts">Öncelik: <code>.turkod</code> &nbsp;•&nbsp; ayrıca: <code>.tr</code><code>.txt</code></div>
+    <div id="dropError"></div>
+  </div>
+</div>
+
+<!-- İNCELEME EKRANI -->
+<div id="viewer">
+  <aside>
+    <section id="kunye">
+      <span id="statusBadge">⏳ İnceleme bekliyor</span>
+      <div class="k-title" id="kTitle">—</div>
+      <div class="k-ver" id="kVer">—</div>
+      <div class="k-desc" id="kDesc">—</div>
+      <table id="kTable"></table>
+    </section>
+
+    <section id="checkSection" style="display:none">
+      <h3>🛡 Otomatik Ön Kontrol</h3>
+      <ul id="checks"></ul>
+    </section>
+
+    <section id="decisionSection" style="display:none">
+      <h3>💬 Geri Bildirim</h3>
+      <div id="decision">
+        <label style="font-size:12px;color:var(--text-dim)" for="fbEmail">📧 Geliştirici e-postası:</label>
+        <input type="email" id="fbEmail" placeholder="ornek@eposta.com" style="width:100%;margin:6px 0 10px">
+        <label style="font-size:12px;color:var(--text-dim)">⚖️ Kararın:</label>
+        <div class="seg" id="fbSeg">
+          <button type="button" data-v="onay" class="seg-onay active">✅ Onay</button>
+          <button type="button" data-v="red" class="seg-red">❌ Red</button>
+        </div>
+        <label style="font-size:12px;color:var(--text-dim)" for="fbNote">📝 Açıklaman:</label>
+        <textarea id="fbNote" placeholder="örn. Dışa aktarımlar temiz, örnek çalışıyor. Elinize sağlık!"></textarea>
+        <div class="row">
+          <button class="primary" id="sendBtn" style="padding:10px;font-size:14px">📧 Gönder</button>
+        </div>
+        <div id="formWarn"></div>
+        <div id="reportOut">
+          <label style="font-size:12px;color:var(--text-dim)">📋 Gönderilecek e-posta önizlemesi:</label>
+          <pre id="reportText"></pre>
+          <div class="row">
+            <button id="copyReportBtn">📋 Kopyala</button>
+            <button id="dlReportBtn">⬇ İndir</button>
+            <button id="resetDecisionBtn" title="Formu sıfırla">↩ Sıfırla</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>📊 Genel Bakış</h3>
+      <div class="stat-grid" id="stats"></div>
+    </section>
+    <section>
+      <h3>🔎 Kodda Ara</h3>
+      <input type="text" id="searchBox" placeholder="örn. yazdır, değişken..." style="width:100%">
+      <div id="searchInfo" style="font-size:12px;color:var(--text-dim);margin-top:6px"></div>
+    </section>
+    <section>
+      <h3>🎯 Satıra Git</h3>
+      <div style="display:flex;gap:6px">
+        <input type="number" id="gotoInput" placeholder="satır no" min="1" style="width:100%">
+        <button id="gotoBtn">Git</button>
+      </div>
+    </section>
+    <section>
+      <h3>🗂 İçindekiler</h3>
+      <ul class="outline-list" id="outline"></ul>
+    </section>
+    <section>
+      <h3>📦 Değişkenler</h3>
+      <ul class="outline-list" id="varlist"></ul>
+    </section>
+  </aside>
+
+  <main>
+    <div id="filebar">
+      <span>📄</span><strong id="fileName">—</strong>
+      <span id="fileMeta">—</span>
+      <span style="flex:1"></span>
+      <button id="copyBtn" title="Açık dosyayı kopyala">📋 Kopyala</button>
+    </div>
+    <div id="fileTabs"></div>
+    <div id="code-scroll">
+      <table id="code-table"><tbody id="codeBody"></tbody></table>
+    </div>
+  </main>
+</div>
+
+<footer id="statusbar"></footer>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const dropzone = $("dropzone"), viewer = $("viewer"), footer = $("statusbar");
+
+// Durum: düz dosya mı (.tr) / paket mi (.turkod)
+let paket = null;          // { ad, version, aciklama, yazar, derlenmeTarihi, turkodSurum, dosyalar }
+let paketDosyalari = [];   // [dosyaAdi...]
+let aktifDosya = "";
+let rawLines = [], fileText = "";
+let karar = null;          // { sonuc: "onay"|"red", not, tarih }
+
+// ---------- satır analizi (Türkçe açıklama) ----------
+const RE = {
+  func: /^\s*fonksiyon\s+([A-Za-zÇçĞğİıÖöŞşÜü_][\wÇçĞğİıÖöŞşÜü]*)/,
+  varDecl: /^\s*(değişken|OndalıklıDeğişken)\s+([A-Za-zÇçĞğİıÖöŞşÜü_][\wÇçĞğİıÖöŞşÜü]*)/,
+  assign: /^\s*([A-Za-zÇçĞğİıÖöŞşÜü_][\wÇçĞğİıÖöŞşÜü]*)\s*:=/,
+  eger: /^\s*eğer\b/,
+  degilse: /^\s*değilse\b/,
+  dongu: /^\s*döngü\b/,
+  sonsuz: /^\s*SonsuzDöngü\b/,
+  icin: /^\s*için\b/,
+  yazdir: /^\s*yazdır\b/,
+  geri: /^\s*(geri_döndür|dön|don)\b/,
+  dur: /^\s*dur\b/,
+  devam: /^\s*devam_et\b/,
+  iceAktar: /^\s*içe_aktar\b/,
+  disaAktar: /^\s*dışa_aktar\b/,
+  dene: /^\s*dene\b/,
+  yakala: /^\s*yakala\b/,
+  nesne: /^\s*nesne\b/,
+  son: /^\s*son\s*$/,
+  comment: /^\s*#/
+};
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function highlight(line){
+  let s = esc(line);
+  const KW = "değişken|OndalıklıDeğişken|yazdır|eğer|değilse|ise|iste|son|fonksiyon|döngü|kez|SonsuzDöngü|Doğru|Yanlış|geri_döndür|dön|don|için|içinde|dur|devam_et|içe_aktar|dışa_aktar|dene|yakala|nesne|ve|veya|değil|Boş";
+  const re = new RegExp(
+    '("[^"\\n]*")' +
+    "|(#[^\\n]*)" +
+    "|(\\b\\d+(?:\\.\\d+)?\\b)" +
+    "|\\b(" + KW + ")\\b" +
+    "|\\b([A-Za-zÇçĞğİıÖöŞşÜü_][\\wÇçĞğİıÖöŞşÜü]*)\\s*(?=\\()" +
+    "|(:=|==|!=|>=|<=|=>|[+\\-*/%<>=:])", "g"
+  );
+  return s.replace(re, (m,str,com,num,kw,fn,op)=>{
+    if(str) return '<span class="tok-str">'+str+'</span>';
+    if(com) return '<span class="tok-com">'+com+'</span>';
+    if(num) return '<span class="tok-num">'+num+'</span>';
+    if(kw)  return '<span class="tok-kw">'+kw+'</span>';
+    if(fn)  return '<span class="tok-fn">'+fn+'</span>';
+    if(op)  return '<span class="tok-op">'+op+'</span>';
+    return m;
+  });
+}
+
+function analyze(line){
+  let m;
+  if(m = line.match(RE.func))    return { badge:["fn","ƒ"], tip:"🔧 Fonksiyon tanımı: "+m[1], outline:{label:m[1]+"()", cls:"fn", tag:"ƒ fonksiyon"} };
+  if(m = line.match(RE.varDecl)) return { badge:["var","𝑥"], tip:"📦 Yeni değişken: "+m[2], isVar:m[2] };
+  if(RE.sonsuz.test(line)) return { badge:["loop","∞"], tip:"♾️ Koşullu sonsuz döngü", outline:{label:"SonsuzDöngü", cls:"loop", tag:"∞ döngü"} };
+  if(RE.dongu.test(line))  return { badge:["loop","⟳"], tip:"🔁 Belirli sayıda tekrarlanan döngü", outline:{label:line.trim().slice(0,40), cls:"loop", tag:"⟳ döngü"} };
+  if(RE.icin.test(line))   return { badge:["loop","∈"], tip:"🔁 Liste / aralık üzerinde döngü", outline:{label:line.trim().slice(0,40), cls:"loop", tag:"∈ döngü"} };
+  if(RE.eger.test(line))   return { badge:["if","?"], tip:"🔀 Koşul kontrolü (eğer)", outline:{label:line.trim().slice(0,40), cls:"if", tag:"? koşul"} };
+  if(RE.degilse.test(line))return { badge:["if","¬"], tip:"🔀 Koşul sağlanmazsa çalışır (değilse)" };
+  if(RE.yazdir.test(line)) return { badge:["print","⎙"], tip:"🖨️ Ekrana yazdırma" };
+  if(RE.geri.test(line))   return { badge:["fn","↩"], tip:"↩ Fonksiyondan değer döndürme" };
+  if(RE.dur.test(line))    return { badge:["loop","■"], tip:"⏹ Döngüden çık" };
+  if(RE.devam.test(line))  return { badge:["loop","⏭"], tip:"⏭ Döngüde sonraki tura geç" };
+  if(RE.iceAktar.test(line))  return { badge:["try","📥"], tip:"📥 Başka modülden kod aktarma" };
+  if(RE.disaAktar.test(line)) return { badge:["try","📤"], tip:"📤 Bu modülden dışa aktarma" };
+  if(RE.dene.test(line))   return { badge:["try","🛡"], tip:"🛡️ Hata yakalama bloğu (dene)", outline:{label:"dene … yakala", cls:"try", tag:"🛡 dene"} };
+  if(RE.yakala.test(line)) return { badge:["try","🛡"], tip:"🛡️ Hata durumunda çalışır (yakala)" };
+  if(RE.nesne.test(line))  return { badge:["fn","⬢"], tip:"⬢ Nesne tanımı", outline:{label:line.trim().slice(0,40), cls:"fn", tag:"⬢ nesne"} };
+  if(RE.son.test(line))    return { badge:null, tip:"🔚 Blok sonu" };
+  if(line.match(RE.comment)){
+    const t = line.trim();
+    if(/^#\s*[=\-─*]{3,}/.test(t) || /^#\s*\d+\./.test(t) || (t.length>4 && t===t.toLocaleUpperCase("tr") && /[A-ZÇĞİÖŞÜ]/.test(t)))
+      return { badge:["sec","§"], tip:"📌 Bölüm başlığı", outline:{label:t.replace(/^#\s*/,"").slice(0,48), cls:"sec", tag:"§ bölüm"} };
+    return { badge:null, tip:"💬 Açıklama satırı" };
+  }
+  if(m = line.match(RE.assign)) return { badge:null, tip:"✏️ "+m[1]+" değişkenine yeni değer atama" };
+  if(/^\s*$/.test(line)) return { badge:null, tip:"" };
+  return { badge:null, tip:"⚙️ İfade / komut satırı" };
+}
+
+// ---------- .turkod paket çözümleme ----------
+function parseTurkod(name, text){
+  let obj;
+  try { obj = JSON.parse(text); }
+  catch { return { ok:false, error:"Bu dosya geçerli bir .turkod paketi değil (JSON okunamadı)." }; }
+  if(!obj || obj.turkodModul !== true)
+    return { ok:false, error:"Geçersiz .turkod paketi: 'turkodModul' bayrağı yok." };
+  if(!obj.dosyalar || typeof obj.dosyalar !== "object" || !Object.keys(obj.dosyalar).length)
+    return { ok:false, error:"Paket boş: içinde hiç dosya yok." };
+  return { ok:true, paket:{
+    ad: obj.ad || name.replace(/\.turkod$/i,""),
+    version: obj.version || obj.versiyon || "?",
+    aciklama: obj.aciklama || "",
+    yazar: obj.yazar || "",
+    derlenmeTarihi: obj.derlenmeTarihi || obj.olusturmaTarihi || "",
+    turkodSurum: obj.turkodSurum || "—",
+    dosyalar: obj.dosyalar
+  }};
+}
+
+// ---------- dosya açma (direkt göster) ----------
+function openFile(name, text){
+  karar = null; fbKarar = "onay"; updateBadge();
+  document.querySelectorAll("#fbSeg button").forEach(x=>x.classList.toggle("active", x.dataset.v==="onay"));
+  $("reportOut").classList.remove("visible");
+  $("fbEmail").value = ""; $("fbNote").value = ""; warn(null);
+  const errBox = $("dropError"); errBox.style.display = "none";
+
+  if(/\.turkod$/i.test(name)){
+    const r = parseTurkod(name, text);
+    if(!r.ok){ errBox.textContent = "❌ " + r.error; errBox.style.display = "block"; return; }
+    paket = r.paket;
+    paketDosyalari = Object.keys(paket.dosyalar);
+    // önce index.tr, yoksa ilk .tr, yoksa ilk dosya
+    aktifDosya = paketDosyalari.includes("index.tr") ? "index.tr"
+      : (paketDosyalari.find(f=>/\.tr$/i.test(f)) || paketDosyalari[0]);
+    renderKunye(name);
+    runChecks();
+    $("kunye").classList.add("visible");
+    $("checkSection").style.display = "block";
+    $("decisionSection").style.display = "block";
+    loadActiveFile(name);
+  } else {
+    paket = null; paketDosyalari = []; aktifDosya = name;
+    fileText = text;
+    rawLines = text.replace(/\r\n?/g,"\n").split("\n");
+    $("kunye").classList.remove("visible");
+    $("checkSection").style.display = "none";
+    $("decisionSection").style.display = "none";
+    $("fileTabs").innerHTML = "";
+    showViewer(name, rawLines.length + " satır • " + (new Blob([text]).size/1024).toFixed(1) + " KB");
+  }
+  $("code-scroll").scrollTop = 0;
+}
+
+function loadActiveFile(packageName){
+  fileText = String(paket.dosyalar[aktifDosya] || "");
+  rawLines = fileText.replace(/\r\n?/g,"\n").split("\n");
+  renderTabs();
+  showViewer(packageName + " → " + aktifDosya,
+    paketDosyalari.length + " dosya • " + rawLines.length + " satır • v" + paket.version);
+}
+
+function showViewer(title, meta){
+  $("fileName").textContent = title;
+  $("fileMeta").textContent = meta;
+  dropzone.classList.add("hidden");
+  viewer.classList.add("visible");
+  footer.classList.add("visible");
+  render();
+}
+
+function renderTabs(){
+  const box = $("fileTabs"); box.innerHTML = "";
+  paketDosyalari.forEach(f=>{
+    const b = document.createElement("button");
+    const isTr = /\.tr$/i.test(f);
+    b.textContent = (isTr ? "📜 " : "📄 ") + f;
+    if(f === aktifDosya) b.classList.add("active");
+    b.addEventListener("click", ()=>{
+      aktifDosya = f;
+      fileText = String(paket.dosyalar[f] || "");
+      rawLines = fileText.replace(/\r\n?/g,"\n").split("\n");
+      renderTabs(); render();
+    });
+    box.appendChild(b);
+  });
+}
+
+// ---------- künye + ön kontrol ----------
+function renderKunye(packageName){
+  $("kTitle").textContent = "📦 " + paket.ad;
+  $("kVer").textContent = "v" + paket.version + " • " + packageName;
+  $("kDesc").innerHTML = paket.aciklama ? esc(paket.aciklama)
+    : '<span class="k-empty">⚠ açıklama yazılmamış</span>';
+  const satir = (k,v)=>"<tr><td>"+k+"</td><td>"+v+"</td></tr>";
+  $("kTable").innerHTML =
+    satir("✍️ Yazar", paket.yazar ? esc(paket.yazar) : '<span class="k-empty">belirtilmemiş</span>') +
+    satir("📁 Dosya", paketDosyalari.length + " adet") +
+    satir("🗓 Derleme", paket.derlenmeTarihi ? esc(paket.derlenmeTarihi.slice(0,10)) : "—") +
+    satir("⚙️ Türkod", esc(String(paket.turkodSurum)));
+}
+
+function runChecks(){
+  const ul = $("checks"); ul.innerHTML = "";
+  const add = (cls, txt)=>{
+    const li = document.createElement("li");
+    li.className = cls; li.innerHTML = txt; ul.appendChild(li);
+  };
+  add("ok", "✅ Paket imzası geçerli (<b>turkodModul: true</b>).");
+  if(!paket.aciklama) add("warn", "⚠️ <b>Açıklama boş</b> — mağazada bu modül tanımsız görünür.");
+  else add("ok", "✅ Açıklama yazılmış.");
+  if(!paket.yazar) add("warn", "⚠️ <b>Yazar belirtilmemiş</b> — kime ait olduğu bilinmiyor.");
+  else add("ok", "✅ Yazar: <b>" + esc(paket.yazar) + "</b>.");
+  const trler = paketDosyalari.filter(f=>/\.tr$/i.test(f));
+  if(!paketDosyalari.includes("index.tr")) add("bad", "❌ <b>index.tr yok</b> — modülün giriş dosyası olmalı.");
+  else add("ok", "✅ <b>index.tr</b> mevcut (" + trler.length + " adet .tr).");
+  const tumKod = Object.entries(paket.dosyalar)
+    .filter(([f])=>/\.tr$/i.test(f)).map(([,c])=>String(c)).join("\n");
+  const dis = tumKod.match(/d[ıi]şa_aktar\s*=\s*\{([^}]*)\}/s);
+  if(dis){
+    const uyeler = dis[1].split("\n").map(l=>l.replace(/#.*/,"").trim()).filter(Boolean);
+    add("ok", "✅ <b>dışa_aktar</b> tanımlı (" + uyeler.length + " üye): " + esc(uyeler.slice(0,6).join(", ")) + (uyeler.length>6?" …":""));
+  } else add("bad", "❌ <b>dışa_aktar</b> bulunamadı — modül ne sunuyor belli değil.");
+  // riskli kalıplar (kesin hüküm değil, göz at uyarısı)
+  const riskli = [];
+  if(/Sistem\.komutÇalıştır/.test(tumKod)) riskli.push("Sistem.komutÇalıştır");
+  if(/Dosyaİşlemleri\.sil|dosya\.sil/.test(tumKod)) riskli.push("dosya silme");
+  if(/içe_aktar\s+Sistem/.test(tumKod)) riskli.push("Sistem modülü kullanımı");
+  if(riskli.length) add("warn", "⚠️ Dikkat — riskli kalıp: <b>" + riskli.join(", ") + "</b>. Satırları gözden geçir.");
+  else add("ok", "✅ Bilinen riskli kalıp yok.");
+}
+
+// ---------- geri bildirim (e-posta + onay/red + açıklama) ----------
+let fbKarar = "onay";
+function bugun(){ return new Date().toISOString().slice(0,10); }
+
+function buildReport(){
+  const not = $("fbNote").value.trim();
+  if(fbKarar === "onay"){
+    // market/index.json formatına uygun giriş üret
+    const giris = {
+      isim: paket.ad,
+      aciklama: paket.aciklama || "",
+      yazar: paket.yazar || "",
+      versiyon: String(paket.version),
+      "içeAktarAdi": paket.ad,
+      icon: "📦",
+      onayli: true,
+      tarih: bugun(),
+      dosyalar: []
+    };
+    return {
+      konu: "[TürkOD] Modülün onaylandı ✅ — " + paket.ad + " v" + paket.version,
+      govde: "Merhaba,\n\n" + paket.ad + " (v" + paket.version + ") adlı modülün incelendi ve ONAYLANDI. ✅\n"
+        + (not ? "\nİnceleme notu:\n" + not + "\n" : "")
+        + "\nModülün 1 gün içinde online mağazada yayınlanacak. Elinize sağlık! 🚀\n\n──\nTürkOD Modül İnceleme"
+        + "\n\n── market/index.json dosyasına eklenecek kayıt ──\n" + JSON.stringify(giris, null, 2)
+    };
+  }
+  return {
+    konu: "[TürkOD] Modülün reddedildi ❌ — " + paket.ad + " v" + paket.version,
+    govde: "Merhaba,\n\n" + paket.ad + " (v" + paket.version + ") adlı modülün incelendi, maalesef REDDEDİLDİ. ❌\n"
+      + "\nGerekçe:\n" + not
+      + "\n\nGerekçeyi düzeltip modülü yeniden gönderebilirsin.\n\n──\nTürkOD Modül İnceleme"
+  };
+}
+
+function warn(msg){
+  const w = $("formWarn");
+  if(!msg){ w.style.display = "none"; w.textContent = ""; return; }
+  w.textContent = msg; w.style.display = "block";
+}
+
+function sendFeedback(){
+  const eposta = $("fbEmail").value.trim();
+  const not = $("fbNote").value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)){ warn("⚠️ Geçerli bir e-posta yazman gerek (örn. ornek@eposta.com)."); $("fbEmail").focus(); return; }
+  if(fbKarar === "red" && !not){ warn("⚠️ Reddederken açıklama yazman zorunlu — geliştirici neyi düzelteceğini bilmeli."); $("fbNote").focus(); return; }
+  warn(null);
+  const r = buildReport();
+  karar = { sonuc: fbKarar, not, eposta, tarih: new Date().toISOString() };
+  updateBadge();
+  $("reportText").textContent = "Kime: " + eposta + "\nKonu: " + r.konu + "\n\n" + r.govde;
+  $("reportOut").classList.add("visible");
+  // E-posta uygulamanda hazır taslak açılır (alıcı + konu + metin doldurulmuş)
+  window.location.href = "mailto:" + encodeURIComponent(eposta)
+    + "?subject=" + encodeURIComponent(r.konu)
+    + "&body=" + encodeURIComponent(r.govde);
+}
+
+function updateBadge(){
+  const b = $("statusBadge");
+  if(!karar){ b.id = "statusBadge"; b.className = ""; b.textContent = "⏳ İnceleme bekliyor"; return; }
+  if(karar.sonuc === "onay"){ b.className = "ok"; b.textContent = "📧 Onay e-postası gönderildi"; }
+  else { b.className = "no"; b.textContent = "📧 Red e-postası gönderildi"; }
+}
+
+// ---------- kod görünümü ----------
+function render(){
+  const body = $("codeBody");
+  body.innerHTML = "";
+  const outline = $("outline"), varlist = $("varlist");
+  outline.innerHTML = ""; varlist.innerHTML = "";
+  const isTr = /\.tr$/i.test(aktifDosya);
+  let counts = { kod:0, yorum:0, bos:0, fonk:0, degisken:0, dongu:0, kosul:0, yazdir:0 };
+  let outlineCount = 0, varCount = 0;
+  const frag = document.createDocumentFragment();
+
+  rawLines.forEach((line, i)=>{
+    const ln = i + 1;
+    const a = isTr ? analyze(line) : { badge:null, tip:"" };
+    const isComment = RE.comment.test(line), isBlank = /^\s*$/.test(line);
+    if(isBlank) counts.bos++;
+    else if(isComment && isTr) counts.yorum++;
+    else counts.kod++;
+    if(a.badge && a.badge[0]==="fn" && a.outline) counts.fonk++;
+    if(a.isVar) counts.degisken++;
+    if(a.badge && a.badge[0]==="loop") counts.dongu++;
+    if(a.badge && a.badge[0]==="if") counts.kosul++;
+    if(a.badge && a.badge[0]==="print") counts.yazdir++;
+
+    const tr = document.createElement("tr");
+    tr.className = "line-row"; tr.id = "satir-" + ln; tr.dataset.ln = ln;
+    const mark = a.badge ? '<span class="badge '+a.badge[0]+'">'+a.badge[1]+'</span>' : "";
+    const govde = line ? (isTr ? highlight(line) : esc(line)) : " ";
+    tr.innerHTML =
+      '<td class="gutter"><span class="ln">'+ln+'</span> <span class="mark">'+mark+'</span></td>' +
+      '<td class="code-cell"><pre>'+govde+'</pre></td>';
+    if(a.tip) tr.title = a.tip.replace(/<[^>]+>/g,"");
+    tr.addEventListener("click", ()=>{
+      document.querySelectorAll("tr.line-row.active").forEach(r=>r.classList.remove("active"));
+      tr.classList.add("active");
+      showStatus(ln, a);
+    });
+    frag.appendChild(tr);
+
+    if(a.outline && outlineCount < 60){
+      outlineCount++;
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.innerHTML = '<span class="ln">'+ln+'</span><span class="badge '+a.outline.cls+'">'+esc(a.outline.tag)+'</span>';
+      const sp = document.createElement("span"); sp.textContent = a.outline.label;
+      btn.appendChild(sp);
+      btn.addEventListener("click", ()=>gotoLine(ln));
+      li.appendChild(btn); outline.appendChild(li);
+    }
+    if(a.isVar && varCount < 80){
+      varCount++;
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.innerHTML = '<span class="ln">'+ln+'</span>';
+      const sp = document.createElement("span"); sp.textContent = a.isVar;
+      btn.appendChild(sp);
+      btn.addEventListener("click", ()=>gotoLine(ln));
+      li.appendChild(btn); varlist.appendChild(li);
+    }
+  });
+  body.appendChild(frag);
+
+  if(!outlineCount) outline.innerHTML = '<li class="empty-note">Fonksiyon / bölüm bulunamadı.</li>';
+  if(!varCount) varlist.innerHTML = '<li class="empty-note">`değişken` tanımı yok.</li>';
+
+  $("stats").innerHTML =
+    stat(rawLines.length,"toplam satır") + stat(counts.kod,"kod satırı") +
+    stat(counts.yorum,"yorum") + stat(counts.bos,"boş satır") +
+    stat(counts.fonk,"fonksiyon") + stat(counts.degisken,"değişken") +
+    stat(counts.dongu,"döngü") + stat(counts.kosul,"koşul") +
+    stat(counts.yazdir,"yazdır") + stat(fileText.length,"karakter");
+  footer.innerHTML = "<span>Toplam <b>"+rawLines.length+"</b> satır</span><span>Kod: <b>"+counts.kod+"</b></span><span>Yorum: <b>"+counts.yorum+"</b></span><span>İpucu: satıra tıklayınca açıklaması altta görünür 👇</span><span id='lineInfo'></span>";
+  applySearch();
+}
+function stat(v,l){ return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'; }
+
+function showStatus(ln, a){
+  const el = $("lineInfo");
+  if(el) el.innerHTML = "Satır <b>"+ln+"</b> — " + (a && a.tip ? esc(a.tip.replace(/<[^>]+>/g,"")) : "");
+}
+
+function gotoLine(ln){
+  ln = Math.max(1, Math.min(rawLines.length, ln|0));
+  const row = $("satir-"+ln);
+  if(!row) return;
+  row.scrollIntoView({block:"center", behavior:"smooth"});
+  row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+  document.querySelectorAll("tr.line-row.active").forEach(r=>r.classList.remove("active"));
+  row.classList.add("active");
+  showStatus(ln, analyze(rawLines[ln-1]));
+}
+
+// ---------- arama ----------
+function applySearch(){
+  const q = $("searchBox").value.trim().toLocaleLowerCase("tr");
+  document.querySelectorAll("#codeBody tr.line-row").forEach(tr=>tr.classList.remove("mark-hit"));
+  if(!q){ $("searchInfo").textContent = ""; renderPlain(); return; }
+  let hits = [];
+  const isTr = /\.tr$/i.test(aktifDosya);
+  document.querySelectorAll("#codeBody tr.line-row").forEach(tr=>{
+    const ln = +tr.dataset.ln;
+    const raw = rawLines[ln-1];
+    if(raw.toLocaleLowerCase("tr").includes(q)){
+      hits.push(ln);
+      tr.classList.add("mark-hit");
+      const pre = tr.querySelector("pre");
+      const base = isTr ? highlight(raw) : esc(raw);
+      pre.innerHTML = base.split(/(<[^>]+>)/g).map(seg=>{
+        if(seg.startsWith("<")) return seg;
+        const idx = seg.toLocaleLowerCase("tr").indexOf(q);
+        if(idx<0) return seg;
+        return esc(seg.slice(0,idx))+'<span class="hl-search">'+esc(seg.slice(idx,idx+q.length))+'</span>'+esc(seg.slice(idx+q.length));
+      }).join("");
+    }
+  });
+  $("searchInfo").textContent = hits.length ? hits.length + " satırda bulundu: " + hits.slice(0,12).join(", ") + (hits.length>12 ? " …" : "") : "❌ Eşleşme yok";
+  if(hits.length) gotoLine(hits[0]);
+}
+function renderPlain(){
+  const isTr = /\.tr$/i.test(aktifDosya);
+  document.querySelectorAll("#codeBody tr.line-row").forEach(tr=>{
+    const raw = rawLines[+tr.dataset.ln - 1];
+    tr.querySelector("pre").innerHTML = raw ? (isTr ? highlight(raw) : esc(raw)) : " ";
+  });
+}
+
+// ---------- olaylar ----------
+function readFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => openFile(file.name, String(e.target.result || ""));
+  reader.readAsText(file, "UTF-8");
+}
+$("fileInput").addEventListener("change", e=>readFile(e.target.files[0]));
+$("fileInput2").addEventListener("change", e=>readFile(e.target.files[0]));
+
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev, e=>{ e.preventDefault(); $("dropCard").classList.add("over"); }));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev, e=>{ e.preventDefault(); $("dropCard").classList.remove("over"); }));
+document.addEventListener("drop", e=>{
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) readFile(f);
+});
+
+$("sampleBtn").addEventListener("click", ()=>{
+  // Stüdyo'nun modül_derle çıktısıyla aynı formatta örnek paket
+  const ornek = {
+    turkodModul: true,
+    turkodSurum: "1.3.0",
+    ad: "OrnekModul",
+    version: "1.0.1",
+    aciklama: "Örnek bir modül paketi — inceleme ekranını denemek için.",
+    yazar: "Deneme Geliştirici",
+    derlenmeTarihi: new Date().toISOString(),
+    dosyalar: {
+      "index.tr": '# OrnekModul — modül tanımı\ndışa_aktar = {\n  selamla\n  topla\n}\n\nfonksiyon selamla(isim)\n  yazdır("Merhaba,", isim)\nson\n\nfonksiyon topla(a, b)\n  geri_döndür a + b\nson',
+      "modul.tr": '# Çalışan örnek\niçe_aktar OrnekModul\n\ndeğişken sonuç := topla(3, 5)\nyazdır("Sonuç:", sonuç)\nselamla("Dünya")'
+    }
+  };
+  openFile("OrnekModul.turkod", JSON.stringify(ornek, null, 2));
+});
+$("closeBtn").addEventListener("click", ()=>{
+  viewer.classList.remove("visible"); footer.classList.remove("visible");
+  dropzone.classList.remove("hidden");
+  $("fileInput").value = ""; $("fileInput2").value = "";
+  paket = null; rawLines = []; fileText = ""; karar = null;
+});
+$("copyBtn").addEventListener("click", async ()=>{
+  try { await navigator.clipboard.writeText(fileText); $("copyBtn").textContent = "✔ Kopyalandı"; }
+  catch { $("copyBtn").textContent = "❌ Olmadı"; }
+  setTimeout(()=>$("copyBtn").textContent = "📋 Kopyala", 1500);
+});
+document.querySelectorAll("#fbSeg button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll("#fbSeg button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    fbKarar = b.dataset.v;
+    warn(null);
+  });
+});
+$("sendBtn").addEventListener("click", sendFeedback);
+$("resetDecisionBtn").addEventListener("click", ()=>{
+  karar = null; fbKarar = "onay";
+  document.querySelectorAll("#fbSeg button").forEach(x=>x.classList.toggle("active", x.dataset.v==="onay"));
+  $("fbEmail").value = ""; $("fbNote").value = "";
+  warn(null); updateBadge(); $("reportOut").classList.remove("visible");
+});
+$("copyReportBtn").addEventListener("click", async ()=>{
+  try { await navigator.clipboard.writeText($("reportText").textContent); $("copyReportBtn").textContent = "✔ Kopyalandı"; }
+  catch { $("copyReportBtn").textContent = "❌ Olmadı"; }
+  setTimeout(()=>$("copyReportBtn").textContent = "📋 Kopyala", 1500);
+});
+$("dlReportBtn").addEventListener("click", ()=>{
+  const ad = (paket ? paket.ad : "modul") + "-" + (karar ? karar.sonuc : "karar") + ".txt";
+  const blob = new Blob([$("reportText").textContent], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = ad; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+});
+$("searchBox").addEventListener("input", applySearch);
+$("gotoBtn").addEventListener("click", ()=>gotoLine(+$("gotoInput").value));
+$("gotoInput").addEventListener("keydown", e=>{ if(e.key==="Enter") gotoLine(+$("gotoInput").value); });
+$("fontSize").addEventListener("change", e=>document.querySelector("#code-table").style.setProperty("--code-size", e.target.value));
+$("wrapToggle").addEventListener("change", e=>document.body.classList.toggle("wrap", e.target.checked));
+$("themeBtn").addEventListener("click", ()=>{
+  const light = document.body.classList.toggle("light");
+  $("themeBtn").textContent = light ? "☀️ Tema" : "🌙 Tema";
+});
+document.addEventListener("keydown", e=>{
+  if(!viewer.classList.contains("visible")) return;
+  if(e.key === "/" && document.activeElement !== $("searchBox")){ e.preventDefault(); $("searchBox").focus(); }
+});
+</script>
+</body>
+</html>
