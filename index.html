@@ -191,6 +191,15 @@
   }
   #reportOut .row { display: flex; gap: 8px; margin-top: 8px; }
   #reportOut .row button { flex: 1; font-size: 12px; }
+  #marketOut { display: none; margin-top: 10px; }
+  #marketOut.visible { display: block; }
+  #marketOut pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; font-size: 11px; max-height: 220px; overflow: auto;
+    font-family: Consolas, monospace; white-space: pre-wrap; word-break: break-word;
+  }
+  #marketOut .row { display: flex; gap: 8px; margin-top: 8px; }
+  #marketOut .row button { flex: 1; font-size: 12px; }
 
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
@@ -259,6 +268,78 @@
   footer.visible { display: flex; }
   footer b { color: var(--text); }
 
+  /* SÜRÜM KARŞILAŞTIRMA */
+  #diffBanner {
+    display: none; margin-bottom: 14px; padding: 14px 16px;
+    background: var(--yellow-soft); border: 1px solid var(--yellow);
+    border-radius: 12px; font-size: 13px; cursor: pointer; transition: .2s;
+  }
+  #diffBanner:hover { filter: brightness(1.05); }
+  #diffBanner.visible { display: block; }
+  #diffBanner .db-title { font-weight: 700; color: var(--yellow); margin-bottom: 4px; }
+  #diffBanner .db-stats { color: var(--text); font-size: 12px; }
+  #diffBanner .db-stats b { color: #fff; }
+  #diffBanner .db-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  #diffModal {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #diffModal.visible { display: flex; }
+  .diff-panel {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 14px;
+    width: 100%; max-width: 960px; max-height: 88vh; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,.5);
+  }
+  .diff-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; background: var(--bg-soft);
+  }
+  .diff-header h3 { font-size: 15px; font-weight: 700; }
+  .diff-header .summary { font-size: 12px; color: var(--text-dim); margin-left: 12px; }
+  .diff-header .summary b { color: var(--green); }
+  .diff-header .summary em { color: var(--red); font-style: normal; }
+  .diff-header .close { background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .diff-header .close:hover { color: var(--text); background: var(--bg-soft); }
+  .diff-body { flex: 1; overflow-y: auto; padding: 0; }
+
+  .diff-file-section { border-bottom: 1px solid var(--border); }
+  .diff-file-bar {
+    padding: 10px 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; font-size: 13px; position: sticky; top: 0; z-index: 1;
+  }
+  .diff-file-bar .fname { font-family: Consolas, monospace; font-weight: 600; color: var(--text); }
+  .diff-file-bar .fstat { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+  .diff-file-bar .fstat b { font-weight: 700; }
+  .diff-file-bar .fstat .plus { color: var(--green); }
+  .diff-file-bar .fstat .minus { color: var(--red); }
+
+  .diff-code { width: 100%; border-collapse: collapse; font-family: Consolas, "JetBrains Mono", monospace; font-size: 12px; line-height: 1.65; }
+  .diff-code td { padding: 0; vertical-align: top; }
+  .diff-code .dl { width: 42px; min-width: 42px; text-align: right; padding: 0 8px 0 12px !important; user-select: none; color: var(--text-dim); font-size: 11px; }
+  .diff-code .ds { width: 18px; min-width: 18px; text-align: center; padding: 0 4px !important; font-weight: 700; }
+  .diff-code .dc { width: 100%; padding: 0 14px 0 6px !important; white-space: pre; }
+
+  .diff-code tr.d-add { background: rgba(46,160,67,.15); }
+  .diff-code tr.d-add .ds { color: var(--green); }
+  .diff-code tr.d-add .dc { color: #aff5b4; }
+
+  .diff-code tr.d-del { background: rgba(248,81,73,.15); }
+  .diff-code tr.d-del .ds { color: var(--red); }
+  .diff-code tr.d-del .dc { color: #ffd1d1; }
+
+  .diff-code tr.d-ctx .dc { color: var(--text-dim); }
+
+  .diff-code tr.d-sep td {
+    padding: 6px 16px !important; background: var(--bg); color: var(--text-dim);
+    font-size: 11px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    text-align: center; cursor: pointer; user-select: none;
+  }
+  .diff-code tr.d-sep:hover td { background: var(--accent-soft); color: var(--accent); }
+
+  .diff-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 40px; }
+
   @media (max-width: 900px) {
     #viewer.visible { flex-direction: column; }
     aside { width: 100%; min-width: 0; max-height: none; position: static; border-right: none; border-bottom: 1px solid var(--border); }
@@ -272,12 +353,12 @@
   <span class="logo">🔍</span>
   <h1>TürkOD İnceleme <small>modül onay paneli</small></h1>
   <nav class="mainnav">
-    <a href="../index.html">Ana Sayfa</a>
-    <a href="../referans/index.html">Referans</a>
-    <a href="../moduller/index.html">Modüller</a>
-    <a href="../deneme/index.html">Canlı Deneme</a>
-    <a href="../gelistirici/index.html">Geliştirici</a>
-    <a href="./index.html" class="active">İnceleme</a>
+    <a href="../">Ana Sayfa</a>
+    <a href="../referans/">Referans</a>
+    <a href="../moduller/">Modüller</a>
+    <a href="../deneme/">Canlı Deneme</a>
+    <a href="../gelistirici/">Geliştirici</a>
+    <a href="./" class="active">İnceleme</a>
   </nav>
   <div class="spacer"></div>
   <label class="file-btn" for="fileInput" style="margin:0">📂 Dosya Aç</label>
@@ -322,6 +403,11 @@
       <div class="k-ver" id="kVer">—</div>
       <div class="k-desc" id="kDesc">—</div>
       <table id="kTable"></table>
+      <div id="diffBanner" onclick="openDiffModal()">
+        <div class="db-title">📊 Önceki sürümle karşılaştırma mevcut</div>
+        <div class="db-stats" id="diffStats"></div>
+        <div class="db-hint">Tıkla: detaylı diff görünümünü aç</div>
+      </div>
     </section>
 
     <section id="checkSection" style="display:none">
@@ -352,6 +438,13 @@
             <button id="copyReportBtn">📋 Kopyala</button>
             <button id="dlReportBtn">⬇ İndir</button>
             <button id="resetDecisionBtn" title="Formu sıfırla">↩ Sıfırla</button>
+          </div>
+        </div>
+        <div id="marketOut">
+          <label style="font-size:12px;color:var(--text-dim)">🏪 <b>market/index.json</b> kaydı — kopyala, <code>web/market/index.json</code> içindeki <code>moduller</code> listesine ekle, push et:</label>
+          <pre id="marketText"></pre>
+          <div class="row">
+            <button id="copyMarketBtn">📋 Market Kaydını Kopyala</button>
           </div>
         </div>
       </div>
@@ -399,6 +492,20 @@
 
 <footer id="statusbar"></footer>
 
+<!-- DIFF MODAL -->
+<div id="diffModal">
+  <div class="diff-panel">
+    <div class="diff-header">
+      <div style="display:flex;align-items:center">
+        <h3>📊 Sürüm Karşılaştırma</h3>
+        <span class="summary" id="diffSummary"></span>
+      </div>
+      <button class="close" onclick="closeDiffModal()">✖</button>
+    </div>
+    <div class="diff-body" id="diffModalBody"></div>
+  </div>
+</div>
+
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -410,6 +517,7 @@ let paketDosyalari = [];   // [dosyaAdi...]
 let aktifDosya = "";
 let rawLines = [], fileText = "";
 let karar = null;          // { sonuc: "onay"|"red", not, tarih }
+let currentDiff = [];      // sürüm karşılaştırma farkları
 
 // ---------- satır analizi (Türkçe açıklama) ----------
 const RE = {
@@ -513,6 +621,7 @@ function openFile(name, text){
   karar = null; fbKarar = "onay"; updateBadge();
   document.querySelectorAll("#fbSeg button").forEach(x=>x.classList.toggle("active", x.dataset.v==="onay"));
   $("reportOut").classList.remove("visible");
+  $("marketOut").classList.remove("visible");
   $("fbEmail").value = ""; $("fbNote").value = ""; warn(null);
   const errBox = $("dropError"); errBox.style.display = "none";
 
@@ -521,11 +630,15 @@ function openFile(name, text){
     if(!r.ok){ errBox.textContent = "❌ " + r.error; errBox.style.display = "block"; return; }
     paket = r.paket;
     paketDosyalari = Object.keys(paket.dosyalar);
-    // önce index.tr, yoksa ilk .tr, yoksa ilk dosya
     aktifDosya = paketDosyalari.includes("index.tr") ? "index.tr"
       : (paketDosyalari.find(f=>/\.tr$/i.test(f)) || paketDosyalari[0]);
     renderKunye(name);
     runChecks();
+    // SÜRÜM KARŞILAŞTIRMA
+    $("diffBanner").classList.remove("visible");
+    currentDiff = [];
+    const prev = getPreviousVersion(paket);
+    if (prev) showDiffBanner(prev, paket);
     $("kunye").classList.add("visible");
     $("checkSection").style.display = "block";
     $("decisionSection").style.display = "block";
@@ -537,6 +650,8 @@ function openFile(name, text){
     $("kunye").classList.remove("visible");
     $("checkSection").style.display = "none";
     $("decisionSection").style.display = "none";
+    $("diffBanner").classList.remove("visible");
+    currentDiff = [];
     $("fileTabs").innerHTML = "";
     showViewer(name, rawLines.length + " satır • " + (new Blob([text]).size/1024).toFixed(1) + " KB");
   }
@@ -625,27 +740,34 @@ function runChecks(){
 let fbKarar = "onay";
 function bugun(){ return new Date().toISOString().slice(0,10); }
 
+function buildMarketEntry(){
+  // market:yukle'nin beklediği format: dosyalar = [{isim, icerik}]
+  const dosyalar = Object.entries(paket.dosyalar || {}).map(([isim, icerik]) => ({
+    isim,
+    icerik: String(icerik ?? "")
+  }));
+  return {
+    isim: paket.ad,
+    aciklama: paket.aciklama || "",
+    yazar: paket.yazar || "",
+    versiyon: String(paket.version),
+    "içeAktarAdi": paket.ad,
+    icon: "📦",
+    onayli: true,
+    topluluk: true,
+    tarih: bugun(),
+    dosyalar
+  };
+}
+
 function buildReport(){
   const not = $("fbNote").value.trim();
   if(fbKarar === "onay"){
-    // market/index.json formatına uygun giriş üret
-    const giris = {
-      isim: paket.ad,
-      aciklama: paket.aciklama || "",
-      yazar: paket.yazar || "",
-      versiyon: String(paket.version),
-      "içeAktarAdi": paket.ad,
-      icon: "📦",
-      onayli: true,
-      tarih: bugun(),
-      dosyalar: []
-    };
     return {
       konu: "[TürkOD] Modülün onaylandı ✅ — " + paket.ad + " v" + paket.version,
       govde: "Merhaba,\n\n" + paket.ad + " (v" + paket.version + ") adlı modülün incelendi ve ONAYLANDI. ✅\n"
         + (not ? "\nİnceleme notu:\n" + not + "\n" : "")
         + "\nModülün 1 gün içinde online mağazada yayınlanacak. Elinize sağlık! 🚀\n\n──\nTürkOD Modül İnceleme"
-        + "\n\n── market/index.json dosyasına eklenecek kayıt ──\n" + JSON.stringify(giris, null, 2)
     };
   }
   return {
@@ -670,9 +792,19 @@ function sendFeedback(){
   warn(null);
   const r = buildReport();
   karar = { sonuc: fbKarar, not, eposta, tarih: new Date().toISOString() };
+  // Onaylandıysa sürümü kaydet (karşılaştırma için)
+  if (fbKarar === "onay" && paket) saveApprovedModule(paket);
   updateBadge();
   $("reportText").textContent = "Kime: " + eposta + "\nKonu: " + r.konu + "\n\n" + r.govde;
   $("reportOut").classList.add("visible");
+  // Onaysa market/index.json kaydını ayrı kutuya koy (kopyala → repoya ekle → push)
+  if (fbKarar === "onay" && paket) {
+    $("marketText").textContent = JSON.stringify(buildMarketEntry(), null, 2);
+    $("marketOut").classList.add("visible");
+    $("copyMarketBtn").textContent = "📋 Market Kaydını Kopyala";
+  } else {
+    $("marketOut").classList.remove("visible");
+  }
   // E-posta uygulamanda hazır taslak açılır (alıcı + konu + metin doldurulmuş)
   window.location.href = "mailto:" + encodeURIComponent(eposta)
     + "?subject=" + encodeURIComponent(r.konu)
@@ -870,7 +1002,12 @@ $("resetDecisionBtn").addEventListener("click", ()=>{
   karar = null; fbKarar = "onay";
   document.querySelectorAll("#fbSeg button").forEach(x=>x.classList.toggle("active", x.dataset.v==="onay"));
   $("fbEmail").value = ""; $("fbNote").value = "";
-  warn(null); updateBadge(); $("reportOut").classList.remove("visible");
+  warn(null); updateBadge(); $("reportOut").classList.remove("visible"); $("marketOut").classList.remove("visible");
+});
+$("copyMarketBtn").addEventListener("click", async ()=>{
+  try { await navigator.clipboard.writeText($("marketText").textContent); $("copyMarketBtn").textContent = "✔ Kopyalandı"; }
+  catch { $("copyMarketBtn").textContent = "❌ Olmadı"; }
+  setTimeout(()=>$("copyMarketBtn").textContent = "📋 Market Kaydını Kopyala", 1500);
 });
 $("copyReportBtn").addEventListener("click", async ()=>{
   try { await navigator.clipboard.writeText($("reportText").textContent); $("copyReportBtn").textContent = "✔ Kopyalandı"; }
@@ -896,7 +1033,190 @@ $("themeBtn").addEventListener("click", ()=>{
 document.addEventListener("keydown", e=>{
   if(!viewer.classList.contains("visible")) return;
   if(e.key === "/" && document.activeElement !== $("searchBox")){ e.preventDefault(); $("searchBox").focus(); }
+  if(e.key === "Escape" && $("diffModal").classList.contains("visible")) closeDiffModal();
 });
+$("diffModal").addEventListener("click", e=>{
+  if(e.target === $("diffModal")) closeDiffModal();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SÜRÜM KARŞILAŞTIRMA SİSTEMİ
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const STORAGE_KEY = "tqk_modules";
+
+function getModuleStore() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+
+function saveModuleStore(store) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function moduleId(name) {
+  return name.toLowerCase().replace(/[^a-z0-9ığüşöçİĞÜŞÖÇ]/g, "").slice(0, 40);
+}
+
+function saveApprovedModule(paket) {
+  const store = getModuleStore();
+  const id = moduleId(paket.ad);
+  if (!store[id]) {
+    store[id] = { id, ad: paket.ad, sonOnay: bugun(), surumler: {} };
+  }
+  store[id].sonOnay = bugun();
+  store[id].surumler[paket.version] = { dosyalar: { ...paket.dosyalar } };
+  saveModuleStore(store);
+}
+
+function getPreviousVersion(paket) {
+  const store = getModuleStore();
+  const id = moduleId(paket.ad);
+  const mod = store[id];
+  if (!mod) return null;
+  const surumler = Object.keys(mod.surumler).sort();
+  const prevVersion = surumler.filter(v => v !== paket.version).pop();
+  if (!prevVersion) return null;
+  return { version: prevVersion, dosyalar: mod.surumler[prevVersion].dosyalar };
+}
+
+function computeDiff(oldFiles, newFiles) {
+  const allKeys = [...new Set([...Object.keys(oldFiles), ...Object.keys(newFiles)])].sort();
+  const result = [];
+  for (const name of allKeys) {
+    const inOld = name in oldFiles;
+    const inNew = name in newFiles;
+    if (inOld && !inNew) {
+      result.push({ name, status: "removed", lines: oldFiles[name].split("\n") });
+    } else if (!inOld && inNew) {
+      result.push({ name, status: "added", lines: newFiles[name].split("\n") });
+    } else if (oldFiles[name] !== newFiles[name]) {
+      const oldLines = oldFiles[name].split("\n");
+      const newLines = newFiles[name].split("\n");
+      result.push({ name, status: "changed", oldLines, newLines });
+    }
+  }
+  return result;
+}
+
+function lineDiff(oldLines, newLines) {
+  // LCS (Longest Common Subsequence) tabanlı diff
+  const n = oldLines.length, m = newLines.length;
+  // LCS tablosu oluştur
+  const dp = Array.from({length: n + 1}, () => new Array(m + 1).fill(0));
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      if (oldLines[i-1] === newLines[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+      else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  // Geri izle
+  const rows = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i-1] === newLines[j-1]) {
+      rows.unshift({ type: "ctx", oldLn: i, newLn: j, text: oldLines[i-1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+      rows.unshift({ type: "added", newLn: j, text: newLines[j-1] });
+      j--;
+    } else {
+      rows.unshift({ type: "removed", oldLn: i, text: oldLines[i-1] });
+      i--;
+    }
+  }
+  return rows;
+}
+
+function showDiffBanner(prev, paket) {
+  const diffs = computeDiff(prev.dosyalar, paket.dosyalar);
+  currentDiff = diffs;
+  const added = diffs.filter(d => d.status === "added").length;
+  const removed = diffs.filter(d => d.status === "removed").length;
+  const changed = diffs.filter(d => d.status === "changed").length;
+  let html = `📦 <b>${esc(prev.version)}</b> → <b>${esc(paket.version)}</b> arası: `;
+  const parts = [];
+  if (added) parts.push(`<b style="color:var(--green)">${added} eklendi</b>`);
+  if (removed) parts.push(`<b style="color:var(--red)">${removed} silindi</b>`);
+  if (changed) parts.push(`<b style="color:var(--yellow)">${changed} değişti</b>`);
+  if (!parts.length) html += "Fark yok (aynı içerik).";
+  else html += parts.join(", ") + ".";
+  $("diffStats").innerHTML = html;
+  $("diffBanner").classList.add("visible");
+}
+
+function openDiffModal() {
+  if (!currentDiff.length) return;
+  const body = $("diffModalBody");
+  body.innerHTML = "";
+
+  // Toplam istatistik
+  let totalAdd = 0, totalDel = 0;
+  for (const d of currentDiff) {
+    if (d.status === "added") totalAdd += d.lines.length;
+    else if (d.status === "removed") totalDel += d.lines.length;
+    else if (d.status === "changed") {
+      const rows = lineDiff(d.oldLines, d.newLines);
+      for (const r of rows) {
+        if (r.type === "added") totalAdd++;
+        else if (r.type === "removed") totalDel++;
+      }
+    }
+  }
+  const summary = $("diffSummary");
+  if (summary) summary.innerHTML = `<b class="plus">+${totalAdd}</b> <em class="minus">-${totalDel}</em>`;
+
+  for (const d of currentDiff) {
+    const section = document.createElement("div");
+    section.className = "diff-file-section";
+
+    if (d.status === "added") {
+      section.innerHTML = `
+        <div class="diff-file-bar">
+          <span class="fname">${esc(d.name)}</span>
+          <span class="fstat"><b class="plus">+${d.lines.length}</b></span>
+        </div>
+        <table class="diff-code">${d.lines.map((l, i) =>
+          `<tr class="d-add"><td class="dl">${i + 1}</td><td class="ds">+</td><td class="dc">${esc(l)}</td></tr>`
+        ).join("")}</table>`;
+    } else if (d.status === "removed") {
+      section.innerHTML = `
+        <div class="diff-file-bar">
+          <span class="fname">${esc(d.name)}</span>
+          <span class="fstat"><b class="minus">-${d.lines.length}</b></span>
+        </div>
+        <table class="diff-code">${d.lines.map((l, i) =>
+          `<tr class="d-del"><td class="dl"></td><td class="ds">-</td><td class="dc">${esc(l)}</td></tr>`
+        ).join("")}</table>`;
+    } else {
+      const rows = lineDiff(d.oldLines, d.newLines);
+      let tableHtml = "";
+
+      for (let ri = 0; ri < rows.length; ri++) {
+        const r = rows[ri];
+        if (r.type === "added") {
+          tableHtml += `<tr class="d-add"><td class="dl">${r.newLn || ""}</td><td class="ds">+</td><td class="dc">${esc(r.text)}</td></tr>`;
+        } else if (r.type === "removed") {
+          tableHtml += `<tr class="d-del"><td class="dl">${r.oldLn || ""}</td><td class="ds">-</td><td class="dc">${esc(r.text)}</td></tr>`;
+        } else {
+          tableHtml += `<tr class="d-ctx"><td class="dl">${r.oldLn}</td><td class="ds"> </td><td class="dc">${esc(r.text)}</td></tr>`;
+        }
+      }
+      section.innerHTML = `
+        <div class="diff-file-bar">
+          <span class="fname">${esc(d.name)}</span>
+          <span class="fstat"><b class="plus">+${totalAdd}</b> <b class="minus">-${totalDel}</b></span>
+        </div>
+        <table class="diff-code">${tableHtml}</table>`;
+    }
+    body.appendChild(section);
+  }
+  $("diffModal").classList.add("visible");
+}
+
+function closeDiffModal() {
+  $("diffModal").classList.remove("visible");
+}
 </script>
 </body>
 </html>
